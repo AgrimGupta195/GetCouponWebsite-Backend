@@ -2,7 +2,20 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Admin = require("../models/adminModel");
 const Coupon = require("../models/couponModel");
-const { set } = require("mongoose");
+
+const generateToken = (userId, res) => {
+    const token = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
+    res.cookie("jwt", token, {
+        httpOnly: true,   // Prevents XSS attacks
+        secure: process.env.NODE_ENV !== "development",  // HTTPS only in production
+        sameSite: "Strict",   // Prevent CSRF
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
+    return token;
+};
+
 exports.loginAdmin = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -12,12 +25,14 @@ exports.loginAdmin = async (req, res) => {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
-        const token = generateToken(admin._id,res);
-        res.json({ token });
+        generateToken(admin._id, res);
+
+        res.json({ message: "Logged in successfully", user: { id: admin._id, email: admin.email } });
     } catch (error) {
         res.status(500).json({ message: "Server error" });
     }
 };
+
 
 exports.getCoupons = async (req, res) => {
     try {
@@ -86,28 +101,24 @@ exports.toggleCouponAvailability = async (req, res) => {
 };
 
 exports.logoutAdmin = (req, res) => {
-    res.cookie("jwt","",{maxAge:0});
-    res.cookie("refreshToken", "", { maxAge: 0 });
+    res.clearCookie("jwt", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== "development",
+        sameSite: "Strict"
+    });
+
     res.json({ message: "Logout successful" });
 };
-exports.checkAuth = (req,res)=>{
+
+exports.checkAuth = (req, res) => {
     try {
+        if (!req.user) {
+            return res.status(401).json({ message: "Not authenticated" });
+        }
         res.status(200).json(req.user);
     } catch (error) {
         console.log(error);
-        res.status(500).json({message:"Internal Server error"})   
+        res.status(500).json({ message: "Internal Server Error" });
     }
-}
+};
 
-const generateToken = (userId,res)=>{
-    const token = jwt.sign({userId},process.env.JWT_SECRET,{
-        expiresIn:"7d",
-    });
-    res.cookie("jwt",token,{
-        maxAge:7*24*60*60*1000,
-        httpOnly:true,
-        sameSite:"Strict",
-        secure:process.env.NODE_ENV !=="development"
-    });
-    return token;
-}
