@@ -36,8 +36,6 @@ const mongoose = require("mongoose");
 exports.claimCoupon = async (req, res) => {
     try {
         const ip = getWiFiIP();
-console.log(ip);
-
         const now = new Date();
         const { id } = req.params;
         const lastClaim = await Coupon.findOne({
