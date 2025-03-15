@@ -9,7 +9,7 @@ const generateToken = (userId, res) => {
     res.cookie("jwt", token, {
         httpOnly: true,   // Prevents XSS attacks
         secure: process.env.NODE_ENV !== "development",  // HTTPS only in production
-        sameSite: "Strict",   // Prevent CSRF
+        sameSite: "None",   // Prevent CSRF
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
@@ -104,7 +104,7 @@ exports.logoutAdmin = (req, res) => {
     res.clearCookie("jwt", {
         httpOnly: true,
         secure: process.env.NODE_ENV !== "development",
-        sameSite: "Strict"
+        sameSite: "None"
     });
 
     res.json({ message: "Logout successful" });
