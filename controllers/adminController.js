@@ -87,7 +87,7 @@ exports.toggleCouponAvailability = async (req, res) => {
 
 exports.logoutAdmin = (req, res) => {
     res.cookie("jwt","",{maxAge:0});
-    res.setHeader("Cache-Control", "no-store");
+    res.cookie("refreshToken", "", { maxAge: 0 });
     res.json({ message: "Logout successful" });
 };
 exports.checkAuth = (req,res)=>{
@@ -106,7 +106,7 @@ const generateToken = (userId,res)=>{
     res.cookie("jwt",token,{
         maxAge:7*24*60*60*1000,
         httpOnly:true,
-        sameSite:"None",
+        sameSite:"Strict",
         secure:process.env.NODE_ENV !=="development"
     });
     return token;
